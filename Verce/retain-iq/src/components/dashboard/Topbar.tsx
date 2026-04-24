@@ -6,7 +6,6 @@ interface TopbarProps {
 }
 
 export default function Topbar({ businessName, userEmail }: TopbarProps) {
-  // Get initials for avatar
   const initials = businessName
     .split(" ")
     .map((w) => w[0])
@@ -15,22 +14,22 @@ export default function Topbar({ businessName, userEmail }: TopbarProps) {
     .toUpperCase();
 
   return (
-    <header className="h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-6 shrink-0">
-      <div />
-
-      <div className="flex items-center gap-4">
-        {/* Business badge */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-brand-100 flex items-center justify-center">
-            <span className="text-xs font-bold text-brand-700">{initials}</span>
+    <header
+      className="bg-white border-b border-zinc-100 flex items-center justify-end px-6 shrink-0"
+      style={{ height: "var(--header-h)" }}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-brand-600 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-white leading-none">{initials}</span>
           </div>
-          <div className="hidden sm:block">
-            <p className="text-sm font-medium text-neutral-800 leading-none">{businessName}</p>
-            <p className="text-xs text-neutral-400 mt-0.5">{userEmail}</p>
+          <div className="hidden sm:block text-right">
+            <p className="text-[13px] font-medium text-zinc-800 leading-none">{businessName}</p>
+            <p className="text-[11px] text-zinc-400 mt-0.5 leading-none">{userEmail}</p>
           </div>
         </div>
 
-        <div className="w-px h-5 bg-neutral-200" />
+        <div className="w-px h-4 bg-zinc-200" />
 
         <SignOutButton />
       </div>

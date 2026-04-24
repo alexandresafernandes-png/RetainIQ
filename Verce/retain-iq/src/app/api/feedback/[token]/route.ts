@@ -2,15 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { scoreSentiment } from "@/lib/utils/sentiment";
 import { triggerFeedbackReceived } from "@/lib/n8n/webhooks";
-
+ 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
+  const { token } = await params;
+ 
   // Parse body
   let rating: number;
   let response_text: string | null;
-
+ 
   try {
     const body = await request.json();
     rating = Number(body.rating);
@@ -18,28 +20,28 @@ export async function POST(
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
-
+ 
   if (!rating || rating < 1 || rating > 5) {
     return NextResponse.json({ error: "Rating must be between 1 and 5" }, { status: 400 });
   }
-
-  const supabase = await createServiceClient();
-
+ 
+  const supabase = createServiceClient();
+ 
   // Fetch session
   const { data: session } = await supabase
     .from("feedback_sessions")
     .select("id, status, expires_at, business_id, customer_id, customers(name)")
-    .eq("token", params.token)
+    .eq("token", token)
     .single();
-
+ 
   if (!session) {
     return NextResponse.json({ error: "Invalid token" }, { status: 404 });
   }
-
+ 
   if (session.status !== "pending") {
     return NextResponse.json({ error: "Feedback already submitted" }, { status: 409 });
   }
-
+ 
   if (session.expires_at && new Date(session.expires_at) < new Date()) {
     await supabase
       .from("feedback_sessions")
@@ -47,10 +49,10 @@ export async function POST(
       .eq("id", session.id);
     return NextResponse.json({ error: "Link has expired" }, { status: 410 });
   }
-
+ 
   // Score sentiment
   const sentiment = scoreSentiment(response_text ?? "", rating);
-
+ 
   // Save to DB
   const { error: updateError } = await supabase
     .from("feedback_sessions")
@@ -62,12 +64,12 @@ export async function POST(
       submitted_at: new Date().toISOString(),
     })
     .eq("id", session.id);
-
+ 
   if (updateError) {
     console.error("feedback update error:", updateError);
     return NextResponse.json({ error: "Failed to save feedback" }, { status: 500 });
   }
-
+ 
   // Notify n8n (fire and forget — don't block response)
   const customer = session.customers as { name: string } | null;
   triggerFeedbackReceived({
@@ -77,6 +79,7 @@ export async function POST(
     rating,
     sentiment,
   }).catch((err) => console.error("n8n notify failed:", err));
-
+ 
   return NextResponse.json({ ok: true });
 }
+ 

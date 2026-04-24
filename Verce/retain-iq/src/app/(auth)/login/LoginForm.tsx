@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
+// Instantiate once at module level
+const supabase = createClient();
+
 export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail]       = useState("");
@@ -17,17 +20,32 @@ export default function LoginForm() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (signInError) {
+        console.error("signIn error:", signInError);
+        throw new Error(signInError.message);
+      }
+
+      if (!data.session) {
+        throw new Error("Login succeeded but no session was returned. Please try again.");
+      }
+
+      console.log("Login successful, redirecting...");
+      router.replace("/dashboard");
+      router.refresh();
+
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      console.error("Login failed:", message);
       setError("Incorrect email or password.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (

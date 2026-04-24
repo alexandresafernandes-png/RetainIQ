@@ -51,7 +51,7 @@ export async function POST(
   }
 
   // Score sentiment
-  const sentiment = scoreSentiment(response_text ?? "", rating);
+  const sentiment = scoreSentiment(response_text ?? "");
 
   // Save to DB
   const { error: updateError } = await supabase

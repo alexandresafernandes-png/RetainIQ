@@ -80,7 +80,8 @@ export default async function MessagesPage() {
           <tbody className="divide-y divide-neutral-100">
             {interactions && interactions.length > 0 ? (
               interactions.map((i) => {
-                const customer = i.customers as { id: string; name: string; phone: string } | null;
+                const rawI = i.customers;
+                const customer = (Array.isArray(rawI) ? rawI[0] ?? null : rawI) as { id?: string; name?: string; phone?: string } | null;
                 return (
                   <tr key={i.id} className="hover:bg-neutral-50 transition-colors">
                     <td className="px-5 py-3.5">

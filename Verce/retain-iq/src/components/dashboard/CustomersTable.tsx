@@ -128,7 +128,6 @@ export default function CustomersTable({ businessId, customers }: Props) {
 
       {showModal && (
         <AddCustomerModal
-          businessId={businessId}
           onAdded={() => router.refresh()}
           onClose={() => setShowModal(false)}
         />

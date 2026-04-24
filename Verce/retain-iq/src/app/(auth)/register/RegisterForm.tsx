@@ -7,19 +7,15 @@ import { createClient } from "@/lib/supabase/client";
 export default function RegisterForm() {
   const router = useRouter();
   const [businessName, setBusinessName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail]               = useState("");
+  const [password, setPassword]         = useState("");
+  const [error, setError]               = useState<string | null>(null);
+  const [loading, setLoading]           = useState(false);
 
   const strength =
-    password.length === 0 ? null
-    : password.length < 8 ? "weak"
-    : password.length < 12 ? "fair"
-    : "strong";
-
-  const strengthColor = strength === "weak" ? "bg-red-400" : strength === "fair" ? "bg-yellow-400" : "bg-green-500";
-  const strengthText  = strength === "weak" ? "text-red-500" : strength === "fair" ? "text-yellow-600" : "text-green-600";
+    password.length === 0 ? null :
+    password.length < 8  ? "weak" :
+    password.length < 12 ? "fair" : "strong";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +39,8 @@ export default function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-4">
+
       <div>
         <label className="label">Business name</label>
         <input
@@ -52,7 +49,7 @@ export default function RegisterForm() {
           value={businessName}
           onChange={(e) => setBusinessName(e.target.value)}
           placeholder="Smith's Salon"
-          className="input"
+          className="input h-10"
         />
       </div>
 
@@ -65,7 +62,7 @@ export default function RegisterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="input"
+          className="input h-10"
         />
       </div>
 
@@ -79,41 +76,57 @@ export default function RegisterForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="At least 8 characters"
-          className="input"
+          className="input h-10"
         />
         {strength && (
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-2.5">
             <div className="flex gap-1 flex-1">
-              {["weak", "fair", "strong"].map((l, i) => (
-                <div
-                  key={l}
-                  className={`h-1 flex-1 rounded-full transition-all ${
-                    (strength === "weak" && i === 0) ||
-                    (strength === "fair" && i <= 1) ||
-                    strength === "strong"
-                      ? strengthColor
-                      : "bg-zinc-200"
-                  }`}
-                />
-              ))}
+              {(["weak", "fair", "strong"] as const).map((l, i) => {
+                const filled =
+                  (strength === "weak"   && i === 0) ||
+                  (strength === "fair"   && i <= 1)  ||
+                  strength === "strong";
+                const color =
+                  strength === "weak"   ? "bg-red-400" :
+                  strength === "fair"   ? "bg-yellow-400" :
+                  "bg-green-500";
+                return (
+                  <div
+                    key={l}
+                    className={`h-1 flex-1 rounded-full transition-all ${filled ? color : "bg-zinc-200"}`}
+                  />
+                );
+              })}
             </div>
-            <span className={`text-xs font-medium ${strengthText}`}>{strength}</span>
+            <span className={`text-xs font-medium ${
+              strength === "weak" ? "text-red-500" :
+              strength === "fair" ? "text-yellow-600" :
+              "text-green-600"
+            }`}>
+              {strength}
+            </span>
           </div>
         )}
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2.5 rounded-[var(--radius-sm)]">
-          <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2.5 rounded-lg">
+          <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           {error}
         </div>
       )}
 
-      <button type="submit" disabled={loading} className="btn-primary btn-lg w-full mt-1">
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-primary w-full h-10 text-[14px] mt-1"
+      >
         {loading ? (
-          <span className="flex items-center gap-2">
+          <span className="flex items-center justify-center gap-2">
             <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
             </svg>
@@ -125,6 +138,7 @@ export default function RegisterForm() {
       <p className="text-xs text-zinc-400 text-center pt-1">
         By signing up you agree to our terms and privacy policy.
       </p>
+
     </form>
   );
 }

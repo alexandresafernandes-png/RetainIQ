@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+// Instantiate once at module level — avoids re-creation issues inside async handlers
+const supabase = createClient();
+
 export default function RegisterForm() {
   const router = useRouter();
   const [businessName, setBusinessName] = useState("");
@@ -14,28 +17,52 @@ export default function RegisterForm() {
 
   const strength =
     password.length === 0 ? null :
-    password.length < 8  ? "weak" :
-    password.length < 12 ? "fair" : "strong";
+    password.length < 8   ? "weak" :
+    password.length < 12  ? "fair" : "strong";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { business_name: businessName } },
-    });
+    try {
+      // Step 1: Create auth user
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { business_name: businessName } },
+      });
 
-    if (signUpError) { setError(signUpError.message); setLoading(false); return; }
-    if (!data.user)  { setError("Something went wrong. Please try again."); setLoading(false); return; }
+      if (signUpError) {
+        console.error("signUp error:", signUpError);
+        throw new Error(signUpError.message);
+      }
 
-    await supabase.from("businesses").insert({ owner_id: data.user.id, name: businessName });
+      if (!data.user) {
+        throw new Error("Account could not be created. Please try again.");
+      }
 
-    router.push("/dashboard");
-    router.refresh();
+      // Step 2: Create business row — non-blocking failure is acceptable
+      const { error: bizError } = await supabase
+        .from("businesses")
+        .insert({ owner_id: data.user.id, name: businessName.trim() });
+
+      if (bizError) {
+        // Log but don't block — user can set business name in settings
+        console.warn("Business insert failed:", bizError.message);
+      }
+
+      // Step 3: Redirect
+      router.push("/dashboard");
+      router.refresh();
+
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      console.error("Registration failed:", message);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -83,12 +110,12 @@ export default function RegisterForm() {
             <div className="flex gap-1 flex-1">
               {(["weak", "fair", "strong"] as const).map((l, i) => {
                 const filled =
-                  (strength === "weak"   && i === 0) ||
-                  (strength === "fair"   && i <= 1)  ||
+                  (strength === "weak"  && i === 0) ||
+                  (strength === "fair"  && i <= 1)  ||
                   strength === "strong";
                 const color =
-                  strength === "weak"   ? "bg-red-400" :
-                  strength === "fair"   ? "bg-yellow-400" :
+                  strength === "weak"  ? "bg-red-400" :
+                  strength === "fair"  ? "bg-yellow-400" :
                   "bg-green-500";
                 return (
                   <div
@@ -110,8 +137,8 @@ export default function RegisterForm() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2.5 rounded-lg">
-          <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2.5 rounded-lg">
+          <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>

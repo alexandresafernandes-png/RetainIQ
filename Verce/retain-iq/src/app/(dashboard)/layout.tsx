@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .single();
 
   return (
-    <div className="flex h-screen bg-neutral-50 overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: "var(--bg)" }}>
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Topbar businessName={business?.name ?? "Your Business"} userEmail={user.email ?? ""} />

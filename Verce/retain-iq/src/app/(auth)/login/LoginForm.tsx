@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
-// Instantiate once at module level
 const supabase = createClient();
 
 export default function LoginForm() {
@@ -27,23 +26,40 @@ export default function LoginForm() {
       });
 
       if (signInError) {
-        console.error("signIn error:", signInError);
-        throw new Error(signInError.message);
+        console.error("signIn error:", signInError.message);
+        setError(signInError.message);
+        setLoading(false);
+        return;
       }
 
       if (!data.session) {
-        throw new Error("Login succeeded but no session was returned. Please try again.");
+        console.error("No session returned — email may not be confirmed.");
+        setError("Login failed: no session returned. Check your email is confirmed.");
+        setLoading(false);
+        return;
       }
 
-      console.log("Login successful, redirecting...");
-      router.replace("/dashboard");
-      router.refresh();
+      // Success — log for debugging
+      console.log("Login success. User:", data.user?.email);
+      console.log("Session expires:", data.session.expires_at);
+
+      // Keep loading true — user is being redirected, no need to reset
+      try {
+        router.replace("/dashboard");
+        router.refresh();
+      } catch (navErr) {
+        console.warn("router.replace failed, falling back to window.location:", navErr);
+      }
+
+      // Fallback — fires after a short delay if router.replace didn't navigate
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 500);
 
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Something went wrong.";
-      console.error("Login failed:", message);
-      setError("Incorrect email or password.");
-    } finally {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+      console.error("Login exception:", message);
+      setError(message);
       setLoading(false);
     }
   }

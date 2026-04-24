@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils/format";
-
+ 
 export const metadata: Metadata = { title: "Customer" };
-
+ 
 const STATUS_COLORS: Record<string, string> = {
   replied:   "badge-green",
   delivered: "badge-blue",
@@ -13,38 +13,39 @@ const STATUS_COLORS: Record<string, string> = {
   pending:   "badge-yellow",
   failed:    "badge-red",
 };
-
+ 
 const SENTIMENT_COLORS: Record<string, string> = {
   positive: "badge-green",
   neutral:  "badge-yellow",
   negative: "badge-red",
 };
-
+ 
 export default async function CustomerDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
+ 
   const { data: business } = await supabase
     .from("businesses")
     .select("id")
     .eq("owner_id", user!.id)
     .single();
-
+ 
   const bid = business?.id ?? "";
-
+ 
   const { data: customer } = await supabase
     .from("customers")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("business_id", bid)
     .single();
-
+ 
   if (!customer) notFound();
-
+ 
   const [{ data: interactions }, { data: feedback }] = await Promise.all([
     supabase
       .from("interactions")
@@ -57,11 +58,11 @@ export default async function CustomerDetailPage({
       .eq("customer_id", customer.id)
       .order("created_at", { ascending: false }),
   ]);
-
+ 
   const latestFeedback = feedback?.[0] ?? null;
   const totalInteractions = interactions?.length ?? 0;
   const replied = interactions?.filter((i) => i.status === "replied").length ?? 0;
-
+ 
   return (
     <div className="max-w-4xl mx-auto">
       {/* Back */}
@@ -74,7 +75,7 @@ export default async function CustomerDetailPage({
         </svg>
         Customers
       </Link>
-
+ 
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">
@@ -89,7 +90,7 @@ export default async function CustomerDetailPage({
           </div>
         </div>
       </div>
-
+ 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white border border-neutral-200 rounded-xl p-4">
@@ -107,7 +108,7 @@ export default async function CustomerDetailPage({
           </p>
         </div>
       </div>
-
+ 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Info */}
         <div className="bg-white border border-neutral-200 rounded-xl p-5">
@@ -129,7 +130,7 @@ export default async function CustomerDetailPage({
             ))}
           </div>
         </div>
-
+ 
         {/* Latest feedback */}
         <div className="bg-white border border-neutral-200 rounded-xl p-5">
           <p className="text-sm font-semibold text-neutral-900 mb-4">Latest feedback</p>
@@ -158,13 +159,13 @@ export default async function CustomerDetailPage({
           )}
         </div>
       </div>
-
+ 
       {/* Interaction history */}
       <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden mt-6">
         <div className="px-5 py-4 border-b border-neutral-100">
           <p className="text-sm font-semibold text-neutral-900">Interaction history</p>
         </div>
-
+ 
         {interactions && interactions.length > 0 ? (
           <table className="w-full text-sm">
             <thead className="bg-neutral-50 border-b border-neutral-200">

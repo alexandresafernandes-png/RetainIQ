@@ -21,23 +21,13 @@ const config: Config = {
           800: "#144d30",
           900: "#113f28",
         },
-        surface: {
-          0:   "#ffffff",
-          50:  "#f8f9fa",
-          100: "#f1f3f5",
-          200: "#e9ecef",
-          300: "#dee2e6",
-        },
-        ink: {
-          900: "#111827",
-          700: "#374151",
-          500: "#6b7280",
-          300: "#d1d5db",
-        },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "monospace"],
+      },
+      fontSize: {
+        "2xs": ["0.65rem", { lineHeight: "1rem" }],
       },
     },
   },

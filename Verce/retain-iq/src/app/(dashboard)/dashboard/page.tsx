@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils/format";
 import Link from "next/link";
-
+ 
 export const metadata: Metadata = { title: "Overview" };
-
+ 
 function StatCard({
   label,
   value,
@@ -28,19 +28,19 @@ function StatCard({
     </div>
   );
 }
-
+ 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
+ 
   const { data: business } = await supabase
     .from("businesses")
     .select("id, name")
     .eq("owner_id", user!.id)
     .single();
-
+ 
   const bid = business?.id ?? "";
-
+ 
   const [
     { count: totalCustomers },
     { count: totalSent },
@@ -66,18 +66,18 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false })
       .limit(5),
   ]);
-
+ 
   const replyRate =
     totalSent && replied
       ? Math.round(((replied ?? 0) / (totalSent ?? 1)) * 100)
       : 0;
-
+ 
   const sentimentColors: Record<string, string> = {
     positive: "badge-green",
     neutral: "badge-yellow",
     negative: "badge-red",
   };
-
+ 
   const statusColors: Record<string, string> = {
     sent: "badge-blue",
     delivered: "badge-blue",
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
     failed: "badge-red",
     pending: "badge-gray",
   };
-
+ 
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
           {business?.name ?? "Your business"} · all time
         </p>
       </div>
-
+ 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total customers" value={totalCustomers ?? 0} sub="Added to RetainIQ" />
@@ -108,10 +108,10 @@ export default async function DashboardPage() {
         />
         <StatCard label="Feedback collected" value={feedbackCount ?? 0} sub="Completed responses" />
       </div>
-
+ 
       {/* Two columns */}
       <div className="grid lg:grid-cols-2 gap-6">
-
+ 
         {/* Recent feedback */}
         <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
@@ -120,15 +120,17 @@ export default async function DashboardPage() {
               View all
             </Link>
           </div>
-
+ 
           {recentFeedback && recentFeedback.length > 0 ? (
             <div className="divide-y divide-neutral-100">
               {recentFeedback.map((f) => {
-                const customer = f.customers as { name: string } | null;
+                const raw = f.customers;
+                const customer = Array.isArray(raw) ? (raw[0] ?? null) : raw;
+                const customerName = (customer as { name?: string } | null)?.name;
                 return (
                   <div key={f.id} className="flex items-center justify-between px-5 py-3.5">
                     <div>
-                      <p className="text-sm font-medium text-neutral-800">{customer?.name ?? "Customer"}</p>
+                      <p className="text-sm font-medium text-neutral-800">{customerName ?? "Customer"}</p>
                       <p className="text-xs text-neutral-400 mt-0.5">{formatDate(f.submitted_at)}</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -154,7 +156,7 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
-
+ 
         {/* Recent messages */}
         <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
@@ -163,15 +165,17 @@ export default async function DashboardPage() {
               View all
             </Link>
           </div>
-
+ 
           {recentInteractions && recentInteractions.length > 0 ? (
             <div className="divide-y divide-neutral-100">
               {recentInteractions.map((i) => {
-                const customer = i.customers as { name: string } | null;
+                const rawI = i.customers;
+                const customer = Array.isArray(rawI) ? (rawI[0] ?? null) : rawI;
+                const customerName = (customer as { name?: string } | null)?.name;
                 return (
                   <div key={i.id} className="flex items-center justify-between px-5 py-3.5">
                     <div className="min-w-0 mr-3">
-                      <p className="text-sm font-medium text-neutral-800">{customer?.name ?? "Customer"}</p>
+                      <p className="text-sm font-medium text-neutral-800">{customerName ?? "Customer"}</p>
                       <p className="text-xs text-neutral-400 mt-0.5 truncate max-w-[180px]">
                         {i.message_body ?? "Follow-up message"}
                       </p>
@@ -195,8 +199,9 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
-
+ 
       </div>
     </div>
   );
 }
+ 

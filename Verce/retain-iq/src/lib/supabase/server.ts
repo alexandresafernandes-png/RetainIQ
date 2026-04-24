@@ -1,5 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 export async function createClient() {
@@ -35,7 +35,7 @@ export async function createServiceClient() {
     throw new Error("Missing Supabase service role environment variables");
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
+  return createSupabaseClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

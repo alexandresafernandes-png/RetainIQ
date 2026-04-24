@@ -4,7 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/format";
 
-const NAV_SECTIONS = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  exact?: boolean;
+};
+
+type NavSection = {
+  label?: string;
+  items: NavItem[];
+};
+
+const NAV_SECTIONS: NavSection[] = [
   {
     items: [
       {
@@ -112,7 +124,7 @@ export default function Sidebar() {
               </p>
             )}
             <div className="flex flex-col gap-px">
-              {section.items.map(({ href, label, icon, exact }) => {
+              {section.items.map(({ href, label, icon, exact }: NavItem) => {
                 const active = isActive(href, exact);
                 return (
                   <Link
@@ -141,7 +153,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Settings at bottom */}
+      {/* Settings */}
       <div className="px-2 py-2 border-t border-zinc-100">
         <Link
           href="/settings"

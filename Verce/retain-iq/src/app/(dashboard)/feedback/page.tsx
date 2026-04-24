@@ -120,7 +120,8 @@ export default async function FeedbackPage() {
           <tbody className="divide-y divide-neutral-100">
             {sessions && sessions.length > 0 ? (
               sessions.map((s) => {
-                const customer = s.customers as { id: string; name: string; phone: string } | null;
+                const rawS = s.customers;
+                const customer = (Array.isArray(rawS) ? rawS[0] ?? null : rawS) as { id?: string; name?: string; phone?: string } | null;
                 return (
                   <tr key={s.id} className="hover:bg-neutral-50 transition-colors align-top">
                     <td className="px-5 py-4">

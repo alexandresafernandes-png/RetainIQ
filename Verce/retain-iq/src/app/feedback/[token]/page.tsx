@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import FeedbackForm from "./FeedbackForm";
-
+ 
 export const dynamic = "force-dynamic";
-
+ 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-neutral-50 flex flex-col items-center justify-center px-5 py-16">
@@ -11,7 +11,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     </main>
   );
 }
-
+ 
 function StateCard({
   icon,
   title,
@@ -31,22 +31,23 @@ function StateCard({
     </Shell>
   );
 }
-
+ 
 export default async function FeedbackPage({
   params,
 }: {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }) {
+  const { token } = await params;
   const supabase = await createClient();
-
+ 
   const { data: session } = await supabase
     .from("feedback_sessions")
     .select("id, status, expires_at, businesses(name), customers(name)")
-    .eq("token", params.token)
+    .eq("token", token)
     .single();
-
+ 
   if (!session) notFound();
-
+ 
   if (session.status === "completed") {
     return (
       <StateCard
@@ -56,7 +57,7 @@ export default async function FeedbackPage({
       />
     );
   }
-
+ 
   if (
     session.status === "expired" ||
     (session.expires_at && new Date(session.expires_at) < new Date())
@@ -69,10 +70,10 @@ export default async function FeedbackPage({
       />
     );
   }
-
+ 
   const business  = session.businesses as { name: string } | null;
   const customer  = session.customers  as { name: string } | null;
-
+ 
   return (
     <Shell>
       {/* Header */}
@@ -89,15 +90,16 @@ export default async function FeedbackPage({
           </p>
         )}
       </div>
-
+ 
       {/* Form card */}
       <div className="bg-white border border-neutral-200 rounded-xl p-6">
-        <FeedbackForm token={params.token} />
+        <FeedbackForm token={token} />
       </div>
-
+ 
       <p className="text-center text-xs text-neutral-300 mt-6">
         Powered by RetainIQ
       </p>
     </Shell>
   );
 }
+ 
